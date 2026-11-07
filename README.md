@@ -64,3 +64,7 @@ https://mail.proton.me/inbox/#mailto=%s
 `%s` is the complete `mailto:` URL encoded with JavaScript-compatible `encodeURIComponent` semantics. Recipients, subject, and body are passed to Proton; this app never sends mail.
 
 Bundle identifier: `com.daalla.mailtoprotonweb`. Preference key: `openDirectlyInProton` in the app's UserDefaults domain; an unset key means enabled.
+
+## License
+
+[MIT](LICENSE). Copyright (c) 2026 Horacio Dalla Valle.
