@@ -198,16 +198,16 @@ final class MailtoWindowController: NSWindowController, NSWindowDelegate {
             alert.runModal()
             return
         }
-        NSWorkspace.shared.open(url)
+        BrowserLauncher.open(url) { _ in }
     }
 }
 
-final class HelpWindowController: NSWindowController {
+final class PreferencesWindowController: NSWindowController {
     private var actions: [ActionHandler] = []
 
     convenience init() {
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 520, height: 340),
+            contentRect: NSRect(x: 0, y: 0, width: 520, height: 360),
             styleMask: [.titled, .closable, .miniaturizable],
             backing: .buffered,
             defer: false
@@ -224,7 +224,7 @@ final class HelpWindowController: NSWindowController {
         let stack = NSStackView()
         stack.orientation = .vertical
         stack.alignment = .leading
-        stack.spacing = 12
+        stack.spacing = 14
         stack.translatesAutoresizingMaskIntoConstraints = false
         root.addSubview(stack)
 
@@ -232,29 +232,47 @@ final class HelpWindowController: NSWindowController {
         title.font = NSFont.systemFont(ofSize: 22, weight: .semibold)
 
         let body = NSTextField(wrappingLabelWithString: """
-        Cuando tocás un enlace mailto: en cualquier app, esta ventana muestra el destinatario, copia, asunto y cuerpo, sin pedirte una cuenta.
+        Por defecto, al tocar un enlace mailto: se abre el redactor de Proton Mail en Google Chrome, sin mostrar esta app.
 
-        Dejala como app de correo predeterminada para que macOS no abra Mail. Mail y tus cuentas no se tocan.
+        Mantené Option (⌥) al tocar el enlace para ver el destinatario, copia, asunto y cuerpo.
 
-        Desde acá podés copiar los campos o abrir el borrador en Proton Mail (web).
+        Mail y tus cuentas no se tocan.
         """)
         body.preferredMaxLayoutWidth = 460
+
+        let toggleRow = NSStackView()
+        toggleRow.orientation = .horizontal
+        toggleRow.alignment = .centerY
+        toggleRow.spacing = 8
+        let toggle = NSSwitch()
+        toggle.state = Preferences.openDirectlyInProton ? .on : .off
+        let toggleHandler = ActionHandler { [weak toggle] in
+            Preferences.openDirectlyInProton = (toggle?.state == .on)
+        }
+        actions.append(toggleHandler)
+        toggle.target = toggleHandler
+        toggle.action = #selector(ActionHandler.call(_:))
+        let toggleLabel = NSTextField(labelWithString: "Abrir directo en Proton")
+        toggleLabel.font = NSFont.systemFont(ofSize: 13, weight: .medium)
+        toggleRow.addArrangedSubview(toggle)
+        toggleRow.addArrangedSubview(toggleLabel)
 
         let buttons = NSStackView()
         buttons.orientation = .horizontal
         buttons.spacing = 10
-        let setDefault = makeButton("Establecer como predeterminada") { [weak self] _ in
-            self?.setAsDefault()
-        }
-        let close = makeButton("Cerrar") { [weak self] _ in
+        buttons.addArrangedSubview(makeButton("Restaurar Mail como app predeterminada") { [weak self] _ in
+            self?.restoreMail()
+        })
+        buttons.addArrangedSubview(makeButton("Cerrar") { [weak self] _ in
             self?.window?.performClose(nil)
+        })
+        if let close = buttons.arrangedSubviews.last as? NSButton {
+            close.keyEquivalent = "\u{1b}"
         }
-        close.keyEquivalent = "\u{1b}"
-        buttons.addArrangedSubview(setDefault)
-        buttons.addArrangedSubview(close)
 
         stack.addArrangedSubview(title)
         stack.addArrangedSubview(body)
+        stack.addArrangedSubview(toggleRow)
         stack.addArrangedSubview(buttons)
 
         NSLayoutConstraint.activate([
@@ -279,9 +297,8 @@ final class HelpWindowController: NSWindowController {
         return button
     }
 
-    private func setAsDefault() {
-        let appURL = DefaultMailtoHandler.applicationBundleURL()
-        DefaultMailtoHandler.setDefault(to: appURL) { error in
+    private func restoreMail() {
+        DefaultMailtoHandler.setDefault(to: DefaultMailtoHandler.mailAppURL) { error in
             DispatchQueue.main.async {
                 let alert = NSAlert()
                 if let error {
@@ -290,7 +307,7 @@ final class HelpWindowController: NSWindowController {
                     alert.informativeText = error.localizedDescription
                 } else {
                     alert.messageText = "Listo"
-                    alert.informativeText = "Mailto Viewer es la app de correo predeterminada. El manejador actual es \(DefaultMailtoHandler.currentHandlerIdentifier())."
+                    alert.informativeText = "Mail volvió a ser la app de correo predeterminada.\nManejador actual: \(DefaultMailtoHandler.currentHandlerIdentifier())."
                 }
                 if let window = self.window {
                     alert.beginSheetModal(for: window)
