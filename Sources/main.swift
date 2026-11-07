@@ -2,14 +2,14 @@ import AppKit
 import Foundation
 
 private let usage = """
-Mailto Viewer
-  (sin argumentos)        Abre la ventana de ayuda
-  mailto:...              Muestra el enlace
-  --set-default           La deja como app de correo predeterminada
-  --restore-mail          Restaura Mail (com.apple.mail) como predeterminada
-  --query-default         Imprime el bundle id del handler actual de mailto:
-  --print-proton URL      Imprime la URL del redactor de Proton Mail
-  --inspect URL           Muestra los campos parseados y la URL de Proton
+Mailto Proton Web
+  (no arguments)         Open preferences
+  mailto:...              Open Proton directly (hold Option to view fields)
+  --set-default           Set this app as the default mailto: handler
+  --restore-mail          Restore Mail (com.apple.mail) as the default
+  --query-default         Print the current mailto: handler bundle ID
+  --print-proton URL      Print the Proton Mail composer URL
+  --inspect URL           Print parsed fields and the Proton URL
 """
 
 let args = CommandLine.arguments
@@ -46,7 +46,7 @@ if let i = args.firstIndex(of: "--inspect"), args.indices.contains(i + 1) {
 }
 
 if args.contains("--print-proton") || args.contains("--inspect") {
-    fputs("Falta la URL mailto:\n", stderr)
+    fputs("Missing mailto: URL\n", stderr)
     exit(1)
 }
 

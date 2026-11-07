@@ -4,7 +4,7 @@ import Foundation
 enum Preferences {
     static let openDirectlyKey = "openDirectlyInProton"
 
-    /// Por defecto está encendido (abrir Proton sin ventana).
+    /// Enabled by default (open Proton without a window).
     static var openDirectlyInProton: Bool {
         get {
             if UserDefaults.standard.object(forKey: openDirectlyKey) == nil {

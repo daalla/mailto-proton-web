@@ -1,95 +1,66 @@
-# Mailto Viewer
+# Mailto Proton Web
 
-App agente de macOS que se pone como manejador de enlaces `mailto:` y, por defecto, abre el redactor web de [Proton Mail](https://mail.proton.me) en Google Chrome **sin mostrar ninguna ventana ni ícono en el Dock**. No toca Mail de Apple ni ninguna cuenta de correo.
+A lightweight macOS agent that handles system-wide `mailto:` links and opens the [Proton Mail](https://mail.proton.me) web composer in Google Chrome, without an intermediate window or Dock icon. It does not configure email accounts or modify Apple Mail.
 
-## Qué hace
+## Behavior
 
-Cuando tocás un `mailto:` en cualquier app (Chrome, Safari, un PDF, Vista Previa, etc.):
+- Click a `mailto:` link in any application to open Proton in Chrome. If Chrome is unavailable, the default browser is used.
+- The agent quits after handing off the URL; no background startup item is needed.
+- Hold **Option (⌥)** while clicking a link to show recipients, Cc, Bcc, subject, and body instead. The window provides **Copy**, **Copy all**, **Open in Proton**, and **Close** actions.
+- Launch the app without a URL to open preferences: **Open directly in Proton** (enabled by default) and **Restore Mail as default app**.
+- Multiple recipients, UTF-8 text, and multiline bodies are supported.
 
-- Se arma la URL de Proton y se abre en **Google Chrome** (`com.google.Chrome`). Si Chrome no está instalado, usa el navegador predeterminado.
-- La app se cierra al toque: no deja ventana ni proceso colgado.
+## Requirements
 
-**Para ver el destinatario, copia, asunto y cuerpo** (la ventana de siempre): mantené **Option (⌥)** mientras tocás el enlace. Desde esa ventana podés copiar los campos o abrir Proton a mano.
+- macOS 13 or later (tested on macOS 26 Tahoe).
+- Xcode Command Line Tools (`swiftc`) to build.
 
-Si abrís la app directo (Spotlight, Finder, sin un `mailto:`), aparece una ventana chica con:
-
-- El interruptor **Abrir directo en Proton** (encendido por defecto; se guarda en `UserDefaults`)
-- **Restaurar Mail como app predeterminada**
-
-Como corre como agente (`LSUIElement`), no tiene ícono en el Dock ni menú en la barra.
-
-Soporta varios destinatarios, `cc`/`bcc`, acentos (UTF-8) y saltos de línea en el cuerpo.
-
-## Requisitos
-
-- macOS 13 o posterior (probado en macOS 26 Tahoe)
-- Command Line Tools de Xcode (`swiftc`) para compilar
-
-## Compilar e instalar
+## Build and install
 
 ```bash
-cd ~/Developer/mailto-viewer
-chmod +x build.sh
+cd ~/Developer/mailto-proton-web
 ./build.sh install
 ```
 
-Eso deja `~/Applications/Mailto Viewer.app`, firmada de forma ad-hoc (sin notarizar).
+Installs `~/Applications/Mailto Proton Web.app`, signed ad hoc (not notarized).
 
-## Dejarla como app de correo predeterminada
-
-Desde la Terminal:
+## Set the default handler
 
 ```bash
-"$HOME/Applications/Mailto Viewer.app/Contents/MacOS/MailtoViewer" --set-default
+APP="$HOME/Applications/Mailto Proton Web.app/Contents/MacOS/MailtoProtonWeb"
+"$APP" --set-default
+"$APP" --query-default
 ```
 
-macOS puede mostrar un diálogo de confirmación: hay que aceptarlo. Eso no cambia cuentas de Mail; solo dice qué app abre los `mailto:`.
+Accept a macOS confirmation dialog if prompted. The query should print `com.daalla.mailtoprotonweb`. This changes only the link handler, not email accounts.
 
-Para comprobarlo:
+## Command-line tools
 
 ```bash
-"$HOME/Applications/Mailto Viewer.app/Contents/MacOS/MailtoViewer" --query-default
+APP="$HOME/Applications/Mailto Proton Web.app/Contents/MacOS/MailtoProtonWeb"
+"$APP" --help
+"$APP" --print-proton 'mailto:ana@example.com?subject=Hello'
+"$APP" --inspect 'mailto:ana@example.com,bob@example.com?cc=c@example.com&bcc=d@example.com&subject=Test&body=Hello%0ASecond%20line'
 ```
 
-Debería imprimir `com.daalla.mailtoviewer`.
+## Restore Apple Mail
 
-## Cómo volver atrás (restaurar Mail)
-
-1. Abrí Mailto Viewer (sin un enlace) y tocá **Restaurar Mail como app predeterminada**.
-2. O **Ajustes del Sistema → Escritorio y Dock → App de correo predeterminada** y elegí **Mail**.
-3. O desde la Terminal:
+Open preferences and select **Restore Mail as default app**, or run:
 
 ```bash
-"$HOME/Applications/Mailto Viewer.app/Contents/MacOS/MailtoViewer" --restore-mail
+"$HOME/Applications/Mailto Proton Web.app/Contents/MacOS/MailtoProtonWeb" --restore-mail
 ```
 
-Eso vuelve a dejar `com.apple.mail` como manejador de `mailto:`. Después podés borrar la app:
+Once Mail is restored, the app can be removed from `~/Applications`.
 
-```bash
-rm -rf "$HOME/Applications/Mailto Viewer.app"
-```
+## Proton URL format
 
-## Abrir en Proton
+Uses Proton web's `MAILTO_PROTOCOL_HANDLER_PATH` from `applications/mail/src/app/constants.ts`:
 
-Usa el mismo formato que registra el cliente web de Proton Mail (`applications/mail/src/app/constants.ts`, `MAILTO_PROTOCOL_HANDLER_PATH`):
-
-```
+```text
 https://mail.proton.me/inbox/#mailto=%s
 ```
 
-`%s` es el enlace `mailto:` completo, encodeado como `encodeURIComponent` (igual que hace `navigator.registerProtocolHandler` y la app de escritorio de Proton con `#mailto=${encodeURIComponent(url)}`). Así viajan destinatarios, asunto y cuerpo.
+`%s` is the complete `mailto:` URL encoded with JavaScript-compatible `encodeURIComponent` semantics. Recipients, subject, and body are passed to Proton; this app never sends mail.
 
-Para ver la URL que se armaría, sin abrir el navegador:
-
-```bash
-"$HOME/Applications/Mailto Viewer.app/Contents/MacOS/MailtoViewer" --print-proton 'mailto:ana@example.com?subject=Hola'
-```
-
-## Extra
-
-```bash
-# Parsear un mailto e imprimir los campos
-"$HOME/Applications/Mailto Viewer.app/Contents/MacOS/MailtoViewer" --inspect 'mailto:ana@example.com,beto@example.com?cc=c@example.com&bcc=d@example.com&subject=Prueba%20%C3%B1and%C3%BA&body=Hola%0ASegunda%20l%C3%ADnea'
-```
-
-Identificador de la app: `com.daalla.mailtoviewer`.
+Bundle identifier: `com.daalla.mailtoprotonweb`. Preference key: `openDirectlyInProton` in the app's UserDefaults domain; an unset key means enabled.

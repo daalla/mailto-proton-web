@@ -14,11 +14,11 @@ struct MailtoDraft: Equatable {
 
     var summary: String {
         let lines = [
-            "Para: \(toText)",
+            "To: \(toText)",
             "Cc: \(ccText)",
-            "Cco: \(bccText)",
-            "Asunto: \(subject)",
-            "Cuerpo:",
+            "Bcc: \(bccText)",
+            "Subject: \(subject)",
+            "Body:",
             body
         ]
         return lines.joined(separator: "\n")
@@ -97,8 +97,8 @@ enum MailtoParser {
 }
 
 enum ProtonMail {
-    /// Mismo template que Proton Mail web: MAILTO_PROTOCOL_HANDLER_PATH
-    /// en applications/mail/src/app/constants.ts → `/inbox/#mailto=%s`
+    /// Same template as Proton Mail web: MAILTO_PROTOCOL_HANDLER_PATH
+    /// in applications/mail/src/app/constants.ts → `/inbox/#mailto=%s`
     static let composerTemplate = "https://mail.proton.me/inbox/#mailto=%s"
 
     static func composerURLString(for mailtoURL: String) -> String {
@@ -110,7 +110,7 @@ enum ProtonMail {
         URL(string: composerURLString(for: mailtoURL))
     }
 
-    /// Equivalente a encodeURIComponent de JavaScript.
+    /// Equivalent to JavaScript encodeURIComponent.
     static func encodeURIComponent(_ string: String) -> String {
         var allowed = CharacterSet.alphanumerics
         allowed.insert(charactersIn: "-_.!~*'()")

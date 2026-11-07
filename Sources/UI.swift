@@ -13,7 +13,7 @@ final class MailtoWindowController: NSWindowController, NSWindowDelegate {
 
     init(draft: MailtoDraft) {
         self.draft = draft
-        let title = draft.subject.isEmpty ? "Mailto Viewer" : draft.subject
+        let title = draft.subject.isEmpty ? "Mailto Proton Web" : draft.subject
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 720, height: 520),
             styleMask: [.titled, .closable, .miniaturizable, .resizable],
@@ -48,17 +48,17 @@ final class MailtoWindowController: NSWindowController, NSWindowDelegate {
         let subjectField = makeTextField(draft.subject)
         let (bodyScroll, bodyView) = makeBodyView(draft.body)
 
-        stack.addArrangedSubview(row(label: "Para", field: toField, text: { toField.stringValue }))
+        stack.addArrangedSubview(row(label: "To", field: toField, text: { toField.stringValue }))
         stack.addArrangedSubview(row(label: "Cc", field: ccField, text: { ccField.stringValue }))
-        stack.addArrangedSubview(row(label: "Cco", field: bccField, text: { bccField.stringValue }))
-        stack.addArrangedSubview(row(label: "Asunto", field: subjectField, text: { subjectField.stringValue }))
+        stack.addArrangedSubview(row(label: "Bcc", field: bccField, text: { bccField.stringValue }))
+        stack.addArrangedSubview(row(label: "Subject", field: subjectField, text: { subjectField.stringValue }))
 
         let bodyRow = NSStackView()
         bodyRow.orientation = .horizontal
         bodyRow.alignment = .top
         bodyRow.spacing = 8
-        let bodyLabel = makeLabel("Cuerpo")
-        let bodyCopy = makeButton("Copiar") { [weak bodyView] button in
+        let bodyLabel = makeLabel("Body")
+        let bodyCopy = makeButton("Copy") { [weak bodyView] button in
             self.copyText(bodyView?.string ?? "", button: button)
         }
         bodyLabel.widthAnchor.constraint(equalToConstant: 64).isActive = true
@@ -77,15 +77,15 @@ final class MailtoWindowController: NSWindowController, NSWindowDelegate {
         buttons.alignment = .centerY
         buttons.spacing = 10
         buttons.addArrangedSubview(NSView()) // spacer
-        let copyAll = makeButton("Copiar todo") { [weak self] button in
+        let copyAll = makeButton("Copy all") { [weak self] button in
             guard let self else { return }
             self.copyText(self.draft.summary, button: button)
         }
-        let proton = makeButton("Abrir en Proton") { [weak self] _ in
+        let proton = makeButton("Open in Proton") { [weak self] _ in
             self?.openInProton()
         }
         proton.keyEquivalent = "\r"
-        let close = makeButton("Cerrar") { [weak self] _ in
+        let close = makeButton("Close") { [weak self] _ in
             self?.window?.performClose(nil)
         }
         close.keyEquivalent = "\u{1b}"
@@ -111,7 +111,7 @@ final class MailtoWindowController: NSWindowController, NSWindowDelegate {
         row.spacing = 8
         let l = makeLabel(label)
         l.widthAnchor.constraint(equalToConstant: 64).isActive = true
-        let b = makeButton("Copiar") { button in
+        let b = makeButton("Copy") { button in
             self.copyText(text(), button: button)
         }
         b.widthAnchor.constraint(equalToConstant: 88).isActive = true
@@ -183,7 +183,7 @@ final class MailtoWindowController: NSWindowController, NSWindowDelegate {
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(text, forType: .string)
         let old = button.title
-        button.title = "Copiado"
+        button.title = "Copied"
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { [weak button] in
             button?.title = old
         }
@@ -193,7 +193,7 @@ final class MailtoWindowController: NSWindowController, NSWindowDelegate {
         let urlString = ProtonMail.composerURLString(for: draft.rawURL)
         guard let url = URL(string: urlString) ?? ProtonMail.composerURL(for: draft.rawURL) else {
             let alert = NSAlert()
-            alert.messageText = "No se pudo armar la URL de Proton"
+            alert.messageText = "Could not build the Proton URL"
             alert.informativeText = urlString
             alert.runModal()
             return
@@ -212,7 +212,7 @@ final class PreferencesWindowController: NSWindowController {
             backing: .buffered,
             defer: false
         )
-        window.title = "Mailto Viewer"
+        window.title = "Mailto Proton Web"
         window.isReleasedWhenClosed = false
         window.center()
         self.init(window: window)
@@ -228,15 +228,15 @@ final class PreferencesWindowController: NSWindowController {
         stack.translatesAutoresizingMaskIntoConstraints = false
         root.addSubview(stack)
 
-        let title = NSTextField(labelWithString: "Mailto Viewer")
+        let title = NSTextField(labelWithString: "Mailto Proton Web")
         title.font = NSFont.systemFont(ofSize: 22, weight: .semibold)
 
         let body = NSTextField(wrappingLabelWithString: """
-        Por defecto, al tocar un enlace mailto: se abre el redactor de Proton Mail en Google Chrome, sin mostrar esta app.
+        By default, clicking a mailto: link opens the Proton Mail composer in Google Chrome without showing this app.
 
-        Mantené Option (⌥) al tocar el enlace para ver el destinatario, copia, asunto y cuerpo.
+        Hold Option (⌥) while clicking a link to view recipients, subject, and body.
 
-        Mail y tus cuentas no se tocan.
+        Mail and your accounts are not modified.
         """)
         body.preferredMaxLayoutWidth = 460
 
@@ -252,7 +252,7 @@ final class PreferencesWindowController: NSWindowController {
         actions.append(toggleHandler)
         toggle.target = toggleHandler
         toggle.action = #selector(ActionHandler.call(_:))
-        let toggleLabel = NSTextField(labelWithString: "Abrir directo en Proton")
+        let toggleLabel = NSTextField(labelWithString: "Open directly in Proton")
         toggleLabel.font = NSFont.systemFont(ofSize: 13, weight: .medium)
         toggleRow.addArrangedSubview(toggle)
         toggleRow.addArrangedSubview(toggleLabel)
@@ -260,10 +260,10 @@ final class PreferencesWindowController: NSWindowController {
         let buttons = NSStackView()
         buttons.orientation = .horizontal
         buttons.spacing = 10
-        buttons.addArrangedSubview(makeButton("Restaurar Mail como app predeterminada") { [weak self] _ in
+        buttons.addArrangedSubview(makeButton("Restore Mail as default app") { [weak self] _ in
             self?.restoreMail()
         })
-        buttons.addArrangedSubview(makeButton("Cerrar") { [weak self] _ in
+        buttons.addArrangedSubview(makeButton("Close") { [weak self] _ in
             self?.window?.performClose(nil)
         })
         if let close = buttons.arrangedSubviews.last as? NSButton {
@@ -303,11 +303,11 @@ final class PreferencesWindowController: NSWindowController {
                 let alert = NSAlert()
                 if let error {
                     alert.alertStyle = .warning
-                    alert.messageText = "No se pudo cambiar la app predeterminada"
+                    alert.messageText = "Could not change the default app"
                     alert.informativeText = error.localizedDescription
                 } else {
-                    alert.messageText = "Listo"
-                    alert.informativeText = "Mail volvió a ser la app de correo predeterminada.\nManejador actual: \(DefaultMailtoHandler.currentHandlerIdentifier())."
+                    alert.messageText = "Done"
+                    alert.informativeText = "Mail is now the default email app again.\nCurrent handler: \(DefaultMailtoHandler.currentHandlerIdentifier())."
                 }
                 if let window = self.window {
                     alert.beginSheetModal(for: window)

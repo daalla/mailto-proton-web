@@ -3,7 +3,7 @@ import CoreServices
 import Foundation
 
 enum DefaultMailtoHandler {
-    static let bundleIdentifier = "com.daalla.mailtoviewer"
+    static let bundleIdentifier = "com.daalla.mailtoprotonweb"
     static let mailBundleIdentifier = "com.apple.mail"
     static let mailAppURL = URL(fileURLWithPath: "/System/Applications/Mail.app")
 
@@ -30,7 +30,7 @@ enum DefaultMailtoHandler {
            let id = Bundle(url: appURL)?.bundleIdentifier {
             return id
         }
-        return "(desconocido)"
+        return "(unknown)"
     }
 
     static func setDefault(to appURL: URL, completion: @escaping (Error?) -> Void) {
@@ -46,40 +46,40 @@ enum DefaultMailtoHandler {
 
     static func setAsDefaultAndWait() {
         let appURL = applicationBundleURL()
-        print("Registrando \(appURL.path) como handler de mailto:…")
-        print("Si macOS muestra un diálogo de confirmación, aceptalo.")
+        print("Registering \(appURL.path) as the mailto: handler…")
+        print("If macOS shows a confirmation dialog, accept it.")
         var finished = false
         setDefault(to: appURL) { error in
             if let error {
                 fputs("Error: \(error.localizedDescription)\n", stderr)
                 exit(1)
             }
-            print("OK handler actual: \(currentHandlerIdentifier())")
+            print("OK current handler: \(currentHandlerIdentifier())")
             finished = true
             exit(0)
         }
         RunLoop.main.run(until: Date(timeIntervalSinceNow: 90))
         if !finished {
-            fputs("Timeout: macOS no confirmó el cambio. Si apareció un diálogo, aceptalo y volvé a intentar.\n", stderr)
+            fputs("Timeout: macOS did not confirm the change. If a dialog appeared, accept it and try again.\n", stderr)
             exit(2)
         }
     }
 
     static func restoreMailAndWait() {
-        print("Restaurando Mail como handler de mailto:…")
+        print("Restoring Mail as the mailto: handler…")
         var finished = false
         setDefault(to: mailAppURL) { error in
             if let error {
                 fputs("Error: \(error.localizedDescription)\n", stderr)
                 exit(1)
             }
-            print("OK handler actual: \(currentHandlerIdentifier())")
+            print("OK current handler: \(currentHandlerIdentifier())")
             finished = true
             exit(0)
         }
         RunLoop.main.run(until: Date(timeIntervalSinceNow: 90))
         if !finished {
-            fputs("Timeout: macOS no confirmó el cambio.\n", stderr)
+            fputs("Timeout: macOS did not confirm the change.\n", stderr)
             exit(2)
         }
     }

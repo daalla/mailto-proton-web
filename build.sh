@@ -2,8 +2,8 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"
-APP_NAME="Mailto Viewer"
-EXEC_NAME="MailtoViewer"
+APP_NAME="Mailto Proton Web"
+EXEC_NAME="MailtoProtonWeb"
 DIST="$ROOT/dist/${APP_NAME}.app"
 CONTENTS="$DIST/Contents"
 MACOS="$CONTENTS/MacOS"
@@ -15,7 +15,7 @@ SDK="$(xcrun --show-sdk-path)"
 ARCH="$(uname -m)"
 TARGET="${ARCH}-apple-macos13"
 
-echo "Compilando para $TARGET (SDK: $SDK)"
+echo "Building for $TARGET (SDK: $SDK)"
 swiftc -swift-version 5 -O \
   -sdk "$SDK" \
   -target "$TARGET" \
@@ -27,7 +27,7 @@ cp "$ROOT/Info.plist" "$CONTENTS/Info.plist"
 printf 'APPL????' > "$CONTENTS/PkgInfo"
 
 codesign --force --deep -s - "$DIST"
-echo "Firmada (ad-hoc): $DIST"
+echo "Signed (ad-hoc): $DIST"
 
 if [[ "${1:-}" == "install" ]]; then
   DEST="${HOME}/Applications/${APP_NAME}.app"
@@ -39,5 +39,5 @@ if [[ "${1:-}" == "install" ]]; then
   if [[ -x "$LSREGISTER" ]]; then
     "$LSREGISTER" -f "$DEST"
   fi
-  echo "Instalada en $DEST"
+  echo "Installed at $DEST"
 fi
