@@ -1,0 +1,7 @@
+dist/
+.build/
+*.app
+.DS_Store
+*.swp
+xcuserdata/
+mailto-viewer-verify.png
